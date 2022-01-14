@@ -1,5 +1,5 @@
 
-- Lets wrape the existing code in an azure function.
+- Lets wrap the existing code in an azure function.
 - The fucntion is triggered by the change in blob storage. (when new xl files are added by a publisher).
 - Azure blob storage has SFTP support. So, published uploads via SFTP. and triggers the function call.
 - Finally, azure function updates the on-premmise / cloud database (Meadify system) based on the existing business logic.
