@@ -26,13 +26,13 @@ namespace MagazineImport.Code.Importers
         public bool Import()
         {
             datStartTime = DateTime.Now;
-            Log.Logger?.Information("Running job '{0}' - {1}", GetType().Name, datStartTime);
+            Log.Logger?.Information($"Running job '{GetType().Name}' - {datStartTime}");
 
-            var b = DoImport();
+            var imported = DoImport();
             datEndTime = DateTime.Now;
-            Log.Logger?.Information("Job '{0}' Completed, result: {3} - {1} ({2} seconds) ", GetType().Name, datEndTime, Convert.ToInt32((datEndTime - datStartTime).TotalSeconds), b);
+            Log.Logger?.Information($"Job '{GetType().Name}' Completed, result: {imported} - {datEndTime} ({Convert.ToInt32((datEndTime - datStartTime).TotalSeconds)} seconds) ");
 
-            return b;
+            return imported;
         }
 
         protected abstract bool DoImport();
@@ -206,6 +206,6 @@ namespace MagazineImport.Code.Importers
                 DbHelper.ExecuteNonQueryProcedure("sp_app_import2_magazine_row_delete", new Dictionary<string, object> { { "intId", Convert.ToInt32(dr["intId"]) }, { "strImportJobId", strImportJobId } });
                 intDelete++;
             }
-        }
+        }        
     }
 }

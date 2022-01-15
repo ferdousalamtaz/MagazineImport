@@ -8,27 +8,19 @@ using MagazineImport.Code.Helpers;
 using MagazineImport.Code.Mapping;
 using Serilog;
 using SmartXLS;
+using System.Configuration;
 
 namespace MagazineImport.Code.Importers
 {
     public class PrenaxImporter : BaseMultiImporter
     {
-        private const string strPathUpload = "C:\\ftpImport\\MagazineImport\\upload";
-        private const string strPathArchive = "C:\\ftpImport\\MagazineImport\\archive";
-        public const string strFilePrefix = "prenax_";
+        private static string strPathUpload = ConfigurationManager.AppSettings["PrenaxUploadPath"];
+        private static string strPathArchive = ConfigurationManager.AppSettings["PrenaxArchivePath"];
+        public static string strFilePrefix = ConfigurationManager.AppSettings["PrenaxFilePrefix"];
 
         protected override bool DoImport()
         {
-            //Make sure paths exists
-            if (!Directory.Exists(strPathUpload))
-                Directory.CreateDirectory(strPathUpload);
-            if (!Directory.Exists(strPathArchive))
-                Directory.CreateDirectory(strPathArchive);
-
-            //Get all excel files in path
-            var filePaths = Directory.GetFiles(strPathUpload)
-                .Where(s => (s.EndsWith(".xls") || s.EndsWith(".xlsx")) && Path.GetFileName(s).StartsWith(strFilePrefix))
-                .ToList();
+            var filePaths = GetFilePaths();
 
             if (filePaths.Count == 0)
             {
@@ -45,7 +37,7 @@ namespace MagazineImport.Code.Importers
                 Log.Logger?.Information("File: {PrenaxImportFileName}", strFullFileName);
 
                 //Init work book
-                using(var wb = new WorkBook())
+                using (var wb = new WorkBook())
                 {
                     if (strFullFileName.EndsWith(".xlsx"))
                         wb.readXLSX(strFullFileName);
@@ -53,22 +45,31 @@ namespace MagazineImport.Code.Importers
                         wb.read(strFullFileName);
 
                     var dt = wb.ExportDataTableFullFixed(true);
-                    offers = dt.AsEnumerable().Select(dr => (IMagazineMapper)new PrenaxMapper(dr, Path.GetFileName(strFullFileName))).ToList();
+                    offers = dt.AsEnumerable().Select(dr => (IMagazineMapper) new PrenaxMapper(dr, Path.GetFileName(strFullFileName))).ToList();
                 }
 
-                ////TEST
-                //foreach (var offer in offers)
-                //{
-                //     Log.Logger?.Information("{0}, in: {1}, out: {2}, curr: {3}", offer.ProductName, offer.InPrice, offer.Price, offer.CurrencyId);
-                //}
-
-                //Import
-                bitReturn &= base.ImportToDatabase(offers);
+                //Import to DB
+                bitReturn = base.ImportToDatabase(offers);
 
                 ArchiveAndLog(strFullFileName, strPathArchive);
             }
-            
+
             return bitReturn;
+        }
+
+        private static List<string> GetFilePaths()
+        {
+            //Make sure paths exists
+            if (!Directory.Exists(strPathUpload))
+                Directory.CreateDirectory(strPathUpload);
+            if (!Directory.Exists(strPathArchive))
+                Directory.CreateDirectory(strPathArchive);
+
+            //Get all excel files in path
+            var filePaths = Directory.GetFiles(strPathUpload)
+                .Where(s => (s.EndsWith(".xls") || s.EndsWith(".xlsx")) && Path.GetFileName(s).StartsWith(strFilePrefix))
+                .ToList();
+            return filePaths;
         }
     }
 
@@ -104,16 +105,16 @@ namespace MagazineImport.Code.Importers
         public override string CountryName { get { return Convert.ToString(Field("PublisherCountry")); } }
         public override string OfferIdPrepaid { get { return Convert.ToString(Field("DeliveryOptionId")); } }
         public override string CampaignIdPrepaid { get { return Convert.ToString(Field("DeliveryOption")); } }
-        public override int SubscriptionLength 
-        { 
+        public override int SubscriptionLength
+        {
             get
             {
                 int length;
                 if (int.TryParse(Convert.ToString(Field("OfferLength")), out length))
                     return length;
-            
+
                 return 0;
-            } 
+            }
         }
         public override decimal InPrice { get { return Convert.ToDecimal(Field("Price").ToString().Replace(",", "."), CultureInfo.InvariantCulture); } }
         public override decimal Price { get { return Convert.ToDecimal(Field("Price").ToString().Replace(",", "."), CultureInfo.InvariantCulture); } }
@@ -124,11 +125,11 @@ namespace MagazineImport.Code.Importers
             {
                 switch (Convert.ToString(Field("Valuta")))
                 {
-                    case "SEK" :
+                    case "SEK":
                         return 1;
                     case "NOK":
                         return 2;
-                    case "EUR" :
+                    case "EUR":
                         return 3;
                     default:
                         return 1;

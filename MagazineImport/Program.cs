@@ -11,6 +11,7 @@ namespace MagazineImport
         static void Main(string[] args)
         {
             AppDomain.CurrentDomain.UnhandledException += AppUnhandledException;
+            bool success = false;
 
             using (var logger = BuildLogger())
             {
@@ -28,15 +29,17 @@ namespace MagazineImport
                     //Run jobs while result is true
                     foreach (var import in importers)
                     {
-                        var success = import.Import();
+                        success = import.Import();
                     }
                 }
                 catch (Exception ex)
                 {
                     LogUnhandledException(ex);
                 }
-
-                logger.Information("All magazine imports completed.");
+                if (success)
+                {
+                    logger.Information("All magazine imports completed.");
+                }
                 //Console.ReadKey();
             }
         }
