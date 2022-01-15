@@ -116,6 +116,7 @@
     <Compile Include="Code\Importers\BaseImporter.cs" />
     <Compile Include="Code\Mapping\IMagazineMapper.cs" />
     <Compile Include="Code\Mapping\MagazineMapperDefaults.cs" />
+    <Compile Include="Code\Mapping\PrenaxMapper.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -123,7 +124,6 @@
     <None Include="App.config">
       <SubType>Designer</SubType>
     </None>
-    <None Include="Improvement TODO.md" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
